@@ -726,18 +726,27 @@ void write_puzzles_to_file(const std::vector<PuzzleResult>& puzzles,
 // Main Function
 // ============================================================
 
-int main() {
+int main(int argc, char* argv[]) {
+    bool demo_mode = false;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--demo") {
+            demo_mode = true;
+        }
+    }
+
     std::cout << "======================================\n";
     std::cout << "Sudoku Solver Performance Analysis\n";
     std::cout << "Author: Ega Luthfi Rais - 13524115\n";
+    if (demo_mode) std::cout << "Mode: Demo (1 puzzle per difficulty)\n";
     std::cout << "======================================\n\n";
     
     // Fixed seed for reproducibility
     std::mt19937 rng(42);
     
-    const int NUM_EASY = 50;
-    const int NUM_MEDIUM = 50;
-    const int NUM_HARD = 50;
+    const int NUM_EASY   = demo_mode ? 1 : 50;
+    const int NUM_MEDIUM = demo_mode ? 1 : 50;
+    const int NUM_HARD   = demo_mode ? 1 : 50;
     
     const int EASY_CLUES = 38;    // 36-40
     const int MEDIUM_CLUES = 32;  // 30-35
@@ -769,8 +778,12 @@ int main() {
         easy_boards.push_back(p);
         easy_results.push_back(pr);
         
-        if ((i + 1) % 10 == 0)
+        if (demo_mode) {
+            std::cout << "\nEasy Puzzle (" << clues << " clues):\n";
+            print_board(p);
+        } else if ((i + 1) % 10 == 0) {
             std::cout << "  Generated " << (i + 1) << " easy puzzles\n";
+        }
     }
     
     // Generate Medium puzzles
@@ -796,8 +809,12 @@ int main() {
         medium_boards.push_back(p);
         medium_results.push_back(pr);
         
-        if ((i + 1) % 10 == 0)
+        if (demo_mode) {
+            std::cout << "\nMedium Puzzle (" << clues << " clues):\n";
+            print_board(p);
+        } else if ((i + 1) % 10 == 0) {
             std::cout << "  Generated " << (i + 1) << " medium puzzles\n";
+        }
     }
     
     // Generate Hard puzzles
@@ -823,8 +840,12 @@ int main() {
         hard_boards.push_back(p);
         hard_results.push_back(pr);
         
-        if ((i + 1) % 10 == 0)
+        if (demo_mode) {
+            std::cout << "\nHard Puzzle (" << clues << " clues):\n";
+            print_board(p);
+        } else if ((i + 1) % 10 == 0) {
             std::cout << "  Generated " << (i + 1) << " hard puzzles\n";
+        }
     }
     
     std::cout << "\nPuzzle generation complete!\n\n";
@@ -834,26 +855,26 @@ int main() {
     std::cout << "======================================\n";
     
     // Run solvers on Easy puzzles
-    std::cout << "\nSolving Easy puzzles...\n";
+    if (!demo_mode) std::cout << "\nSolving Easy puzzles...\n";
     for (size_t i = 0; i < easy_boards.size(); i++) {
         run_all_solvers(easy_boards[i], easy_results[i]);
-        if ((i + 1) % 10 == 0)
+        if (!demo_mode && (i + 1) % 10 == 0)
             std::cout << "  Solved " << (i + 1) << "/" << NUM_EASY << " easy puzzles\n";
     }
     
     // Run solvers on Medium puzzles
-    std::cout << "\nSolving Medium puzzles...\n";
+    if (!demo_mode) std::cout << "\nSolving Medium puzzles...\n";
     for (size_t i = 0; i < medium_boards.size(); i++) {
         run_all_solvers(medium_boards[i], medium_results[i]);
-        if ((i + 1) % 10 == 0)
+        if (!demo_mode && (i + 1) % 10 == 0)
             std::cout << "  Solved " << (i + 1) << "/" << NUM_MEDIUM << " medium puzzles\n";
     }
     
     // Run solvers on Hard puzzles
-    std::cout << "\nSolving Hard puzzles...\n";
+    if (!demo_mode) std::cout << "\nSolving Hard puzzles...\n";
     for (size_t i = 0; i < hard_boards.size(); i++) {
         run_all_solvers(hard_boards[i], hard_results[i]);
-        if ((i + 1) % 10 == 0)
+        if (!demo_mode && (i + 1) % 10 == 0)
             std::cout << "  Solved " << (i + 1) << "/" << NUM_HARD << " hard puzzles\n";
     }
     
@@ -862,24 +883,25 @@ int main() {
     // Print summary tables
     print_summary_table(easy_results, medium_results, hard_results);
     
-    // Write results to CSV
-    std::ofstream csv_out("../output/results.csv");
-    write_csv_header(csv_out);
-    for (const auto& r : easy_results) write_csv_row(csv_out, r);
-    for (const auto& r : medium_results) write_csv_row(csv_out, r);
-    for (const auto& r : hard_results) write_csv_row(csv_out, r);
-    csv_out.close();
-    
-    // Write puzzles to files
-    write_puzzles_to_file(easy_results, easy_boards, "../data/easy_puzzles.csv", "Easy");
-    write_puzzles_to_file(medium_results, medium_boards, "../data/medium_puzzles.csv", "Medium");
-    write_puzzles_to_file(hard_results, hard_boards, "../data/hard_puzzles.csv", "Hard");
-    
-    std::cout << "\nResults saved to:\n";
-    std::cout << "  - output/results.csv\n";
-    std::cout << "  - data/easy_puzzles.csv\n";
-    std::cout << "  - data/medium_puzzles.csv\n";
-    std::cout << "  - data/hard_puzzles.csv\n";
+    // Only write CSV files in full mode
+    if (!demo_mode) {
+        std::ofstream csv_out("../output/results.csv");
+        write_csv_header(csv_out);
+        for (const auto& r : easy_results) write_csv_row(csv_out, r);
+        for (const auto& r : medium_results) write_csv_row(csv_out, r);
+        for (const auto& r : hard_results) write_csv_row(csv_out, r);
+        csv_out.close();
+        
+        write_puzzles_to_file(easy_results, easy_boards, "../data/easy_puzzles.csv", "Easy");
+        write_puzzles_to_file(medium_results, medium_boards, "../data/medium_puzzles.csv", "Medium");
+        write_puzzles_to_file(hard_results, hard_boards, "../data/hard_puzzles.csv", "Hard");
+        
+        std::cout << "\nResults saved to:\n";
+        std::cout << "  - output/results.csv\n";
+        std::cout << "  - data/easy_puzzles.csv\n";
+        std::cout << "  - data/medium_puzzles.csv\n";
+        std::cout << "  - data/hard_puzzles.csv\n";
+    }
     
     return 0;
 }
